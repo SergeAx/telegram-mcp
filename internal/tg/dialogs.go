@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/gotd/td/tg"
 	mcp "github.com/metoro-io/mcp-golang"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // DialogType represents the type of dialog for filtering
@@ -147,7 +147,7 @@ func newDialogs(rawD tg.MessagesDialogsClass, onlyUnread bool) (*dialogs, error)
 	for _, uc := range d.Users {
 		u, ok := uc.(*tg.User)
 		if !ok {
-			log.Debug().Msgf("newDialogs(%+v): invalid message user", uc)
+			slog.Debug("newDialogs: invalid message user", "user", uc)
 
 			continue
 		}
@@ -188,7 +188,7 @@ func (d *dialogs) Info() []DialogInfo {
 
 		info, err := d.processDialog(dialogItem)
 		if err != nil {
-			log.Debug().Err(err).Str("dialog", dItem.String()).Msg("failed process dialog")
+			slog.Debug("Failed to process dialog", "dialog", dItem.String(), "err", err)
 
 			continue
 		}
@@ -319,7 +319,7 @@ func (d *dialogs) getType(rawD *tg.Dialog) DialogType {
 	case *tg.PeerUser:
 		u, ok := d.users[getPeerID(rawD.Peer)]
 		if !ok {
-			log.Debug().Msgf("getType(%+v): user not found", v)
+			slog.Debug("getType: user not found", "peer", v)
 
 			return DialogTypeUser
 		}
@@ -330,7 +330,7 @@ func (d *dialogs) getType(rawD *tg.Dialog) DialogType {
 
 		return DialogTypeUser
 	default:
-		log.Debug().Msgf("getType(%+v): unknown dialog type", v)
+		slog.Debug("getType: unknown dialog type", "peer", v)
 
 		return DialogTypeUnknown
 	}

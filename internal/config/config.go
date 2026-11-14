@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"github.com/rs/zerolog/log"
 
 	"github.com/chaindead/telegram-mcp/internal/atomicfile"
 	"github.com/chaindead/telegram-mcp/internal/secret"
@@ -51,7 +51,7 @@ func Load(dir string) (*Config, error) {
 		for _, k := range unknown {
 			keys = append(keys, k.String())
 		}
-		log.Warn().Strs("keys", keys).Str("file", Path(dir)).Msg("Ignoring unknown config keys")
+		slog.Warn("Ignoring unknown config keys", "keys", keys, "file", Path(dir))
 	}
 
 	return &c, nil

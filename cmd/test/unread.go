@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"sort"
 	"time"
 
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/time/rate"
 )
 
@@ -188,7 +188,7 @@ func getUnreadMessages(ctx context.Context, client *telegram.Client) ([]UnreadMe
 			Hash:       0,
 		})
 		if err != nil {
-			log.Error().Err(err).Msg("failed to get messages")
+			slog.Error("failed to get messages", "err", err)
 
 			continue
 		}
@@ -210,7 +210,7 @@ func getUnreadMessages(ctx context.Context, client *telegram.Client) ([]UnreadMe
 				Users:    m.Users,
 			}
 		default:
-			log.Error().Msg("unexpected messages response type")
+			slog.Error("unexpected messages response type")
 
 			continue
 		}

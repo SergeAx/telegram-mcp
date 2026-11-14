@@ -3,6 +3,7 @@ package tg
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/gotd/td/telegram/auth/qrlogin"
 	"github.com/gotd/td/tg"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 
 	"github.com/chaindead/telegram-mcp/internal/prompt"
 )
@@ -27,7 +27,7 @@ func Auth(phone string, appID int, appHash string, storage telegram.SessionStora
 		UpdateHandler:  dispatcher,
 	}
 	if newOpts, err := telegram.OptionsFromEnvironment(opts); err != nil {
-		log.Warn().Err(err).Msg("Failed to load OptionsFromEnvironment, skipping")
+		slog.Warn("Failed to load OptionsFromEnvironment, skipping", "err", err)
 	} else {
 		opts = newOpts
 	}

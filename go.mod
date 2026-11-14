@@ -9,7 +9,6 @@ require (
 	github.com/invopop/jsonschema v0.12.0
 	github.com/metoro-io/mcp-golang v0.8.0
 	github.com/pkg/errors v0.9.1
-	github.com/rs/zerolog v1.34.0
 	github.com/urfave/cli/v3 v3.1.0
 	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/term v0.45.0

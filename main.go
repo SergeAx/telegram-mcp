@@ -4,11 +4,10 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 )
 
@@ -17,23 +16,13 @@ const (
 )
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-
-	debugPath := os.Getenv("TG_DEBUG_LOG")
-	if debugPath != "" {
-		logFile, err := os.OpenFile(debugPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666) //nolint:gosec // the operator chooses the log path
-		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to open debug log file")
-		}
-
-		log.Logger = log.Output(logFile)
-		log.Info().Msgf("Enabling debug logging to %s", debugPath)
+	if err := setupLogging(); err != nil {
+		exit(err)
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to get home dir")
+		exit(fmt.Errorf("find the home directory: %w", err))
 	}
 
 	app := &cli.Command{
@@ -115,8 +104,35 @@ func main() {
 	}
 
 	if err := app.Run(context.Background(), os.Args); err != nil {
-		log.Fatal().Msg(err.Error())
+		exit(err)
 	}
+}
+
+// setupLogging writes to stderr, which MCP clients keep as the server's
+// log, or with TG_DEBUG_LOG to that file in JSON, debug messages included.
+func setupLogging() error {
+	path := os.Getenv("TG_DEBUG_LOG")
+	if path == "" {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
+
+		return nil
+	}
+
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666) //nolint:gosec // the operator chooses the log path
+	if err != nil {
+		return fmt.Errorf("open the debug log: %w", err)
+	}
+	slog.SetDefault(slog.New(slog.NewJSONHandler(f, &slog.HandlerOptions{Level: slog.LevelDebug})))
+
+	return nil
+}
+
+func exit(err error) {
+	notice("Error: %v", err)
+	if os.Getenv("TG_DEBUG_LOG") != "" {
+		slog.Error("Exiting", "err", err)
+	}
+	os.Exit(1)
 }
 
 // notice talks to the person at the terminal; logs are for diagnostics.

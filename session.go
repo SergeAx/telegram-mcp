@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"strings"
 
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 
 	"github.com/chaindead/telegram-mcp/internal/config"
@@ -25,7 +25,7 @@ import (
 func serverStorage(cmd *cli.Command, cfg *config.Config) (*sessionstore.Store, error) {
 	if cfg.DefaultAccount == 0 || cmd.IsSet("session") {
 		path := legacySessionPath(cmd)
-		log.Warn().Str("session", path).Msg("The session is not encrypted: run telegram-mcp init to encrypt it")
+		slog.Warn("The session is not encrypted: run telegram-mcp init to encrypt it", "session", path)
 
 		return sessionstore.Open(path, nil), nil
 	}
