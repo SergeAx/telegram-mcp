@@ -290,5 +290,14 @@ Assistants running in a terminal, such as Claude Code, can link straight to a ch
 
 - [ ] Encrypt secrets in the session file with a key kept in `.env`: anyone who reads the file can take over the account
 - [ ] Read the 2FA password from the console or STDIN instead of `--password`, which leaks into shell history and the process list
+- [ ] Include each message's ID in `tg_dialog`, so assistants can link to it as `t.me/<chat>/<id>`
 - [ ] Report each message's media type and number of reactions in `tg_dialog`
+- [ ] Add a tool that reads a single message, with its full list of reactions on request
 - [ ] Address users without a username by ID, like `cht[id]` and `chn[id:hash]`: `tg_dialogs` gives them no `name`, so `tg_dialog`, `tg_read` and `tg_send` can't reach them
+- [ ] Split the core out of the server, so larger MCP servers can embed it, including ones that serve over HTTP
+- [ ] Low priority: retry and rate-limit on Telegram's flood-wait errors, e.g. with gotd's `floodwait` and `ratelimit` middleware
+
+Under consideration:
+
+- Sending messages for real next to drafts, including photos and files
+- Marking the read-only tools with `readOnlyHint`, which needs a move to the official `modelcontextprotocol/go-sdk`: `metoro-io/mcp-golang` can't express tool annotations
