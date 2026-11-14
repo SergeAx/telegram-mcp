@@ -31,7 +31,7 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	server := mcp.NewServer(stdio.NewStdioServerTransport())
-	client := tg.New(int(appID), appHash, sessionPath)
+	client := tg.New(int(appID), appHash, sessionPath, cmd.String("download-dir"))
 
 	if dryRun {
 		return runChecks(client)
@@ -55,6 +55,11 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 	err = server.RegisterTool("tg_send", "Send draft message to dialog", client.SendDraft)
 	if err != nil {
 		return fmt.Errorf("register dialogs tool: %w", err)
+	}
+
+	err = server.RegisterTool("tg_download", "Download the document attached to a message, returning the local path", client.Download)
+	if err != nil {
+		return fmt.Errorf("register download tool: %w", err)
 	}
 
 	err = server.RegisterTool("tg_read", "Mark dialog messages as read", client.ReadHistory)

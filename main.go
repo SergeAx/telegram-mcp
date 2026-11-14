@@ -59,6 +59,12 @@ func main() {
 				Sources: cli.EnvVars("TG_SESSION_PATH"),
 			},
 			&cli.StringFlag{
+				Name:    "download-dir",
+				Usage:   "Directory tg_download saves documents to, one subdirectory per dialog",
+				Value:   filepath.Join(os.TempDir(), "telegram-mcp"),
+				Sources: cli.EnvVars("TG_DOWNLOAD_DIR"),
+			},
+			&cli.StringFlag{
 				Name:    "schema-version",
 				Usage:   "JSON Schema version URL (e.g. https://json-schema.org/draft-07/schema#)",
 				Sources: cli.EnvVars("TG_SCHEMA_VERSION"),

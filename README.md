@@ -31,6 +31,7 @@ The server is a bridge between the Telegram API and the AI assistants and is bas
   - [Authorization](#authorization)
   - [Client Configuration](#client-configuration)
   - [JSON Schema Version](#json-schema-version)
+  - [Download directory](#download-directory)
   - [Telegram links in Windows Terminal](#telegram-links-in-windows-terminal)
 - [To-do](#to-do)
 
@@ -46,6 +47,7 @@ The Model Context Protocol (MCP) is a system that lets AI apps, like Claude Desk
 - [x] List dialogs with unread counts and optional unread filter (`tool: tg_dialogs`)
 - [x] Mark dialog as read (`tool: tg_read`)
 - [x] Retrieve messages from specific dialog, with message IDs and attachments' type, file name and size, optionally only those with a file (`tool: tg_dialog`)
+- [x] Download the document attached to a message (`tool: tg_download`)
 - [x] Send draft messages to any dialog (`tool: tg_send`)
 
 ### Prompt examples
@@ -277,6 +279,10 @@ Common values:
 |---------|-----|
 | Draft-07 (recommended for VS Code) | `https://json-schema.org/draft-07/schema#` |
 | Draft 2020-12 (default) | `https://json-schema.org/draft/2020-12/schema` |
+
+### Download directory
+
+`tg_download` saves documents to `telegram-mcp` in the system temp directory, one subdirectory per dialog, as `<message id>-<file name>`. Set another place with the `--download-dir` flag or the `TG_DOWNLOAD_DIR` environment variable. Treat what lands there as untrusted: anyone in the chat could have sent it.
 
 ### Telegram links in Windows Terminal
 

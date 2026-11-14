@@ -6,13 +6,15 @@ type Client struct {
 	appID       int
 	appHash     string
 	sessionPath string
+	downloadDir string
 }
 
-func New(appID int, appHash, sessionPath string) *Client {
+func New(appID int, appHash, sessionPath, downloadDir string) *Client {
 	return &Client{
 		appID:       appID,
 		appHash:     appHash,
 		sessionPath: sessionPath,
+		downloadDir: downloadDir,
 	}
 }
 
