@@ -190,7 +190,7 @@ rm telegram-mcp.tar.gz
 ### From Source
 
 Requirements:
-- Go 1.24 or later
+- Go 1.25 or later
 - GOBIN in PATH
 
 ```bash
