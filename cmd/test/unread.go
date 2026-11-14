@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"sort"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	cfg "github.com/spf13/pflag"
 	"golang.org/x/time/rate"
 )
 
@@ -21,7 +21,7 @@ const (
 
 //nolint:gochecknoglobals // CLI flags must be global
 var (
-	messageLimit = cfg.Int("limit", defaultMessageLimit, "limit of unread messages to fetch")
+	messageLimit = flag.Int("limit", defaultMessageLimit, "limit of unread messages to fetch")
 )
 
 //nolint:gochecknoglobals // Rate limiter should be global for consistent rate limiting across all functions
