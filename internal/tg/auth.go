@@ -14,6 +14,8 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/chaindead/telegram-mcp/internal/sessionstore"
 )
 
 func Auth(phone string, appID int64, appHash string, sessionPath string, password string, newSession, useQR bool) error {
@@ -25,10 +27,8 @@ func Auth(phone string, appID int64, appHash string, sessionPath string, passwor
 	loggedIn := qrlogin.OnLoginToken(dispatcher)
 
 	opts := telegram.Options{
-		SessionStorage: &telegram.FileSessionStorage{
-			Path: sessionPath,
-		},
-		UpdateHandler: dispatcher,
+		SessionStorage: sessionstore.Open(sessionPath),
+		UpdateHandler:  dispatcher,
 	}
 	if newOpts, err := telegram.OptionsFromEnvironment(opts); err != nil {
 		log.Warn().Err(err).Msg("Failed to load OptionsFromEnvironment, skipping")

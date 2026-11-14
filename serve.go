@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/chaindead/telegram-mcp/internal/sessionstore"
 	"github.com/chaindead/telegram-mcp/internal/tg"
 	"github.com/invopop/jsonschema"
 
@@ -31,7 +32,7 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	server := mcp.NewServer(stdio.NewStdioServerTransport())
-	client := tg.New(int(appID), appHash, sessionPath, cmd.String("download-dir"))
+	client := tg.New(int(appID), appHash, sessionstore.Open(sessionPath), cmd.String("download-dir"))
 
 	if dryRun {
 		return runChecks(client)
