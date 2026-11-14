@@ -48,10 +48,9 @@ func main() {
 				Sources:  cli.EnvVars("TG_APP_ID"),
 			},
 			&cli.StringFlag{
-				Name:     "api-hash",
-				Usage:    "Telegram API Hash",
-				Required: true,
-				Sources:  cli.EnvVars("TG_API_HASH"),
+				Name:    "api-hash",
+				Usage:   "Telegram API Hash, needed only for auth",
+				Sources: cli.EnvVars("TG_API_HASH"),
 			},
 			&cli.StringFlag{
 				Name:    "session",

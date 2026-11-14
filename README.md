@@ -104,8 +104,7 @@ npx -y @chaindead/telegram-mcp auth ...
       "command": "npx",
       "args": ["-y", "@chaindead/telegram-mcp"],
       "env": {
-        "TG_APP_ID": "<your-api-id>",
-        "TG_API_HASH": "<your-api-hash>"
+        "TG_APP_ID": "<your-api-id>"
       }
     }
   }
@@ -223,6 +222,8 @@ Before you can use the server, you need to connect to the Telegram API.
 
 Example of Configuring Claude Desktop to recognize the Telegram MCP server.
 
+The server needs only the API ID: the API hash is used by `auth` alone.
+
 1. Open the Claude Desktop configuration file:
     - in MacOS, the configuration file is located at `~/Library/Application Support/Claude/claude_desktop_config.json`
     - in Windows, the configuration file is located at `%APPDATA%\Claude\claude_desktop_config.json`
@@ -240,7 +241,6 @@ Example of Configuring Claude Desktop to recognize the Telegram MCP server.
           "command": "telegram-mcp",
           "env": {
             "TG_APP_ID": "<your-app-id>",
-            "TG_API_HASH": "<your-api-hash>",
             "PATH": "<path_to_telegram-mcp_binary_dir>",
             "HOME": "<path_to_your_home_directory"
           }
@@ -256,8 +256,7 @@ Example of Configuring Claude Desktop to recognize the Telegram MCP server.
         "telegram-mcp": {
           "command": "telegram-mcp",
           "env": {
-            "TG_APP_ID": "<your-app-id>",
-            "TG_API_HASH": "<your-api-hash>"
+            "TG_APP_ID": "<your-app-id>"
           }
         }
       }

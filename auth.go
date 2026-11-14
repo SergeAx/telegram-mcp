@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	"github.com/chaindead/telegram-mcp/internal/tg"
@@ -17,6 +18,9 @@ func authCommand(_ context.Context, cmd *cli.Command) error {
 	pass := cmd.String("password")
 	appID := cmd.Root().Int("app-id")
 	apiHash := cmd.Root().String("api-hash")
+	if apiHash == "" {
+		return errors.New("--api-hash (or TG_API_HASH) is required for auth")
+	}
 	sessionPath := cmd.Root().String("session")
 
 	log.Info().
@@ -31,34 +35,14 @@ func authCommand(_ context.Context, cmd *cli.Command) error {
 		log.Fatal().Err(err).Msg("Failed to authenticate with Telegram")
 	}
 
-	c := struct {
-		Telegram struct {
-			Command string `json:"command"`
-			Env     struct {
-				AppID   string `json:"TG_APP_ID"`
-				APIHash string `json:"TG_API_HASH"`
-			} `json:"env"`
-		} `json:"telegram"`
-	}{
-		Telegram: struct {
-			Command string `json:"command"`
-			Env     struct {
-				AppID   string `json:"TG_APP_ID"`
-				APIHash string `json:"TG_API_HASH"`
-			} `json:"env"`
-		}{
-			Command: "telegram-mcp",
-			Env: struct {
-				AppID   string `json:"TG_APP_ID"`
-				APIHash string `json:"TG_API_HASH"`
-			}{
-				AppID:   strconv.FormatInt(appID, 10),
-				APIHash: apiHash,
-			},
+	config := map[string]any{
+		"telegram": map[string]any{
+			"command": "telegram-mcp",
+			"env":     map[string]string{"TG_APP_ID": strconv.FormatInt(appID, 10)},
 		},
 	}
 
-	data, _ := json.MarshalIndent(c, "", "\t")
+	data, _ := json.MarshalIndent(config, "", "\t")
 	log.Info().RawJSON("config", data).Msg("Successfully authenticated with Telegram")
 
 	return nil
