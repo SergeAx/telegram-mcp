@@ -14,9 +14,12 @@ import (
 )
 
 type HistoryArguments struct {
-	Name   string `json:"name" jsonschema:"required,description=Name of the dialog"`
-	Offset int    `json:"offset,omitempty" jsonschema:"description=Offset for continuation"`
+	Name          string `json:"name" jsonschema:"required,description=Name of the dialog"`
+	Offset        int    `json:"offset,omitempty" jsonschema:"description=Offset for continuation"`
+	DocumentsOnly bool   `json:"documents_only,omitzero" jsonschema:"description=Return only messages with a file attached"`
 }
+
+const documentsPageSize = 100
 
 type HistoryResponse struct {
 	Messages []MessageInfo `json:"messages"`
@@ -34,10 +37,19 @@ func (c *Client) GetHistory(args HistoryArguments) (*mcp.ToolResponse, error) {
 			return fmt.Errorf("get inputPeer from name: %w", err)
 		}
 
-		messagesClass, err = api.MessagesGetHistory(ctx, &tg.MessagesGetHistoryRequest{
-			Peer:     inputPeer,
-			OffsetID: args.Offset,
-		})
+		if args.DocumentsOnly {
+			messagesClass, err = api.MessagesSearch(ctx, &tg.MessagesSearchRequest{
+				Peer:     inputPeer,
+				Filter:   &tg.InputMessagesFilterDocument{},
+				OffsetID: args.Offset,
+				Limit:    documentsPageSize,
+			})
+		} else {
+			messagesClass, err = api.MessagesGetHistory(ctx, &tg.MessagesGetHistoryRequest{
+				Peer:     inputPeer,
+				OffsetID: args.Offset,
+			})
+		}
 		if err != nil {
 			return fmt.Errorf("failed to get history: %w", err)
 		}

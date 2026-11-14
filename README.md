@@ -45,7 +45,7 @@ The Model Context Protocol (MCP) is a system that lets AI apps, like Claude Desk
 - [x] Get current account information (`tool: tg_me`)
 - [x] List dialogs with unread counts and optional unread filter (`tool: tg_dialogs`)
 - [x] Mark dialog as read (`tool: tg_read`)
-- [x] Retrieve messages from specific dialog, with message IDs and attachments' type, file name and size (`tool: tg_dialog`)
+- [x] Retrieve messages from specific dialog, with message IDs and attachments' type, file name and size, optionally only those with a file (`tool: tg_dialog`)
 - [x] Send draft messages to any dialog (`tool: tg_send`)
 
 ### Prompt examples
