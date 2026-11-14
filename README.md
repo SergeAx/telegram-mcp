@@ -31,6 +31,7 @@ The server is a bridge between the Telegram API and the AI assistants and is bas
   - [Authorization](#authorization)
   - [Client Configuration](#client-configuration)
   - [JSON Schema Version](#json-schema-version)
+  - [Telegram links in Windows Terminal](#telegram-links-in-windows-terminal)
 - [Star History](#star-history)
 
 ## What is MCP?
@@ -276,6 +277,14 @@ Common values:
 |---------|-----|
 | Draft-07 (recommended for VS Code) | `https://json-schema.org/draft-07/schema#` |
 | Draft 2020-12 (default) | `https://json-schema.org/draft/2020-12/schema` |
+
+### Telegram links in Windows Terminal
+
+Assistants running in a terminal, such as Claude Code, can link straight to a chat or message with `tg://resolve?domain=<chat>&post=<id>`. Windows Terminal asks for confirmation before opening any link that is not `http`, `https` or `file`. To open `tg://` links without the prompt, add the scheme to the global `safeUriSchemes` setting in Windows Terminal's `settings.json` (version 1.24.11321 or later):
+
+```json
+"safeUriSchemes": ["tg"]
+```
 
 ## Star History
 
