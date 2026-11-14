@@ -306,3 +306,4 @@ Under consideration:
 
 - Sending messages for real next to drafts, including photos and files
 - Marking the read-only tools with `readOnlyHint`, which needs a move to the official `modelcontextprotocol/go-sdk`: `metoro-io/mcp-golang` can't express tool annotations
+- Multi-account support
