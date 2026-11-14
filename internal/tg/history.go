@@ -42,10 +42,6 @@ func (c *Client) GetHistory(args HistoryArguments) (*mcp.ToolResponse, error) {
 			return fmt.Errorf("failed to get history: %w", err)
 		}
 
-		//Debug
-		//jsonData, _ := json.Marshal(messagesClass)
-		//log.Info().RawJSON("history", cleanJSON(jsonData)).Msg("history")
-
 		return nil
 	}); err != nil {
 		return nil, errors.Wrap(err, "failed to get history")

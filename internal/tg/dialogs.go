@@ -80,10 +80,6 @@ func (c *Client) GetDialogs(args DialogsArguments) (*mcp.ToolResponse, error) {
 			return fmt.Errorf("failed to get dialogs: %w", err)
 		}
 
-		// Debug
-		//jsonData, _ := json.Marshal(dc)
-		//log.Info().RawJSON("dialogs", cleanJSON(jsonData)).Msg("dialogs")
-
 		return nil
 	}); err != nil {
 		return nil, errors.Wrap(err, "failed to get dialogs")
