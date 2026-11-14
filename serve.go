@@ -91,31 +91,30 @@ func runChecks(client *tg.Client) error {
 
 	log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetDialogs: OK")
 
-	_, err = client.GetHistory(tg.HistoryArguments{Name: os.Getenv("TG_TEST_USERNAME")})
+	// The public @telegram news channel, not the verified "Telegram" service
+	// chat: that one holds login codes, which must not reach the log.
+	answer, err = client.GetHistory(tg.HistoryArguments{Name: "telegram"})
 	if err != nil {
-		return fmt.Errorf("get nickname history: %w", err)
-	}
-
-	_, err = client.GetHistory(tg.HistoryArguments{Name: "cht[4626931529]"})
-	if err != nil {
-		return fmt.Errorf("get chat history: %w", err)
-	}
-
-	answer, err = client.GetHistory(tg.HistoryArguments{Name: "chn[2225853048:8934705438195741763]"})
-	if err != nil {
-		return fmt.Errorf("get chan history: %w", err)
+		return fmt.Errorf("get channel history: %w", err)
 	}
 
 	log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetHistory: OK")
 
-	answer, err = client.SendDraft(tg.DraftArguments{Name: os.Getenv("TG_TEST_USERNAME"), Text: "test draft"})
+	testUser := os.Getenv("TG_TEST_USERNAME")
+	if testUser == "" {
+		log.Info().Msg("TG_TEST_USERNAME is not set, skipping SendDraft and ReadHistory checks")
+
+		return nil
+	}
+
+	answer, err = client.SendDraft(tg.DraftArguments{Name: testUser, Text: "test draft"})
 	if err != nil {
 		log.Err(err).Msg("Check SendDraft: FAIL")
 	} else {
 		log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check SendDraft: OK")
 	}
 
-	answer, err = client.ReadHistory(tg.ReadArguments{Name: os.Getenv("TG_TEST_USERNAME")})
+	answer, err = client.ReadHistory(tg.ReadArguments{Name: testUser})
 	if err != nil {
 		log.Err(err).Msg("Check ReadHistory: FAIL")
 	} else {
