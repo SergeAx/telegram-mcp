@@ -32,7 +32,7 @@ The server is a bridge between the Telegram API and the AI assistants and is bas
   - [Client Configuration](#client-configuration)
   - [JSON Schema Version](#json-schema-version)
   - [Telegram links in Windows Terminal](#telegram-links-in-windows-terminal)
-- [Star History](#star-history)
+- [To-do](#to-do)
 
 ## What is MCP?
 
@@ -286,12 +286,8 @@ Assistants running in a terminal, such as Claude Code, can link straight to a ch
 "safeUriSchemes": ["tg"]
 ```
 
-## Star History
+## To-do
 
-<a href="https://www.star-history.com/#chaindead/telegram-mcp&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=chaindead/telegram-mcp&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=chaindead/telegram-mcp&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=chaindead/telegram-mcp&type=Date" />
- </picture>
-</a>
+- [ ] Encrypt secrets in the session file with a key kept in `.env`: anyone who reads the file can take over the account
+- [ ] Read the 2FA password from the console or STDIN instead of `--password`, which leaks into shell history and the process list
+- [ ] Report each message's media type and number of reactions in `tg_dialog`
