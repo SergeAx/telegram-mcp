@@ -23,10 +23,16 @@ const header = "# Written by telegram-mcp init and auth: edited values are kept,
 type Config struct {
 	APIID   int            `toml:"api_id,omitzero"`
 	APIHash secret.Armored `toml:"api_hash,omitempty"`
+	// DefaultAccount is the Telegram user ID of the account the server uses.
+	DefaultAccount int64 `toml:"default_account,omitzero"`
 }
 
 func Path(dir string) string {
 	return filepath.Join(dir, fileName)
+}
+
+func SessionPath(dir string, userID int64) string {
+	return filepath.Join(dir, fmt.Sprintf("%d.session.age", userID))
 }
 
 // Load returns an empty Config if there is no config file yet.

@@ -26,7 +26,7 @@ func TestSaveLoad(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	if err := (&Config{APIID: 12345, APIHash: hash}).Save(dir); err != nil {
+	if err := (&Config{APIID: 12345, APIHash: hash, DefaultAccount: 3017676}).Save(dir); err != nil {
 		t.Fatal(err)
 	}
 
@@ -42,7 +42,7 @@ func TestSaveLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.APIID != 12345 || c.APIHash != hash {
+	if c.APIID != 12345 || c.APIHash != hash || c.DefaultAccount != 3017676 {
 		t.Errorf("Load() = %+v, want what was saved", *c)
 	}
 }

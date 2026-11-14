@@ -42,7 +42,7 @@ func resolveCredentials(cmd *cli.Command, cfg *config.Config, reask bool) (crede
 	return c, nil
 }
 
-func (c credentials) save(dir string, cfg *config.Config) error {
+func (c credentials) apply(cfg *config.Config) error {
 	key, err := secretKey()
 	if err != nil {
 		return err
@@ -51,10 +51,6 @@ func (c credentials) save(dir string, cfg *config.Config) error {
 	cfg.APIID = c.apiID
 	if cfg.APIHash, err = key.Encrypt([]byte(c.apiHash)); err != nil {
 		return fmt.Errorf("encrypt API hash: %w", err)
-	}
-
-	if err := cfg.Save(dir); err != nil {
-		return fmt.Errorf("save credentials: %w", err)
 	}
 
 	return nil

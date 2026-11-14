@@ -5,27 +5,32 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
 
-	"github.com/chaindead/telegram-mcp/internal/config"
-	"github.com/chaindead/telegram-mcp/internal/tg"
-
+	"github.com/gotd/td/session"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
+
+	"github.com/chaindead/telegram-mcp/internal/config"
+	"github.com/chaindead/telegram-mcp/internal/secret"
+	"github.com/chaindead/telegram-mcp/internal/sessionstore"
+	"github.com/chaindead/telegram-mcp/internal/tg"
 )
 
-func authCommand(_ context.Context, cmd *cli.Command) error {
+func authCommand(ctx context.Context, cmd *cli.Command) error {
 	phone := cmd.String("phone")
 	useQR := cmd.Bool("qr")
 	if phone == "" && !useQR {
 		return errors.New("either --phone or --qr is required")
 	}
-	newSession := cmd.Bool("new")
-	pass := cmd.String("password")
 	dir := cmd.Root().String("config-dir")
-	sessionPath := legacySessionPath(cmd)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return fmt.Errorf("create %s: %w", dir, err)
+	}
 
 	cfg, err := config.Load(dir)
 	if err != nil {
@@ -35,24 +40,32 @@ func authCommand(_ context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	if err := migrateLegacySession(ctx, cmd, cfg, creds.apiID); err != nil {
+		return err
+	}
+	key, err := secretKey()
+	if err != nil {
+		return err
+	}
 
-	ev := log.Info().
-		Str("session", sessionPath).
-		Int("api_id", creds.apiID)
+	login, err := currentSession(ctx, dir, cfg, key, cmd.Bool("new"))
+	if err != nil {
+		return err
+	}
+
+	ev := log.Info().Int("api_id", creds.apiID)
 	if phone != "" {
 		ev = ev.Str("phone", maskPhone(phone))
 	}
 	ev.Msg("Authenticate with Telegram")
 
-	err = tg.Auth(phone, int64(creds.apiID), creds.apiHash, sessionPath, pass, newSession, useQR)
+	userID, err := tg.Auth(phone, creds.apiID, creds.apiHash, login, cmd.String("password"), useQR)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to authenticate with Telegram")
 	}
 
-	if creds.asked {
-		if err := creds.save(dir, cfg); err != nil {
-			return err
-		}
+	if err := saveAccount(ctx, dir, cfg, creds, key, login, userID); err != nil {
+		return err
 	}
 
 	server := map[string]any{"command": "telegram-mcp"}
@@ -60,8 +73,56 @@ func authCommand(_ context.Context, cmd *cli.Command) error {
 		server["env"] = map[string]string{"TG_API_ID": strconv.Itoa(creds.apiID)}
 	}
 
-	data, _ := json.MarshalIndent(map[string]any{"telegram": server}, "", "\t")
-	log.Info().RawJSON("config", data).Msg("Successfully authenticated with Telegram")
+	snippet, _ := json.MarshalIndent(map[string]any{"telegram": server}, "", "\t")
+	log.Info().RawJSON("config", snippet).Msg("Successfully authenticated with Telegram")
+
+	return nil
+}
+
+// currentSession starts the login from the default account's session, so
+// that auth logs in only if that one no longer works.
+func currentSession(ctx context.Context, dir string, cfg *config.Config, key *secret.Key, fresh bool) (*session.StorageMemory, error) {
+	login := new(session.StorageMemory)
+	if fresh || cfg.DefaultAccount == 0 {
+		return login, nil
+	}
+
+	data, err := sessionstore.Open(config.SessionPath(dir, cfg.DefaultAccount), key).LoadSession(ctx)
+	switch {
+	case err == nil:
+		_ = login.StoreSession(ctx, data)
+	case !errors.Is(err, fs.ErrNotExist):
+		return nil, fmt.Errorf("load the current session (--new logs in afresh): %w", err)
+	}
+
+	return login, nil
+}
+
+func saveAccount(
+	ctx context.Context, dir string, cfg *config.Config, creds credentials, key *secret.Key, login *session.StorageMemory, userID int64,
+) error {
+	data, err := login.Bytes(nil)
+	if err != nil {
+		return fmt.Errorf("read the new session: %w", err)
+	}
+	store := sessionstore.Open(config.SessionPath(dir, userID), key)
+	if err := store.StoreSession(ctx, data); err != nil {
+		return fmt.Errorf("save the new session: %w", err)
+	}
+	if prev := cfg.DefaultAccount; prev != 0 && prev != userID {
+		log.Info().Str("session", config.SessionPath(dir, prev)).Msg("Kept the session of the previous account")
+	}
+
+	cfg.DefaultAccount = userID
+	if creds.asked {
+		if err := creds.apply(cfg); err != nil {
+			return err
+		}
+	}
+	if err := cfg.Save(dir); err != nil {
+		return fmt.Errorf("save config: %w", err)
+	}
+	log.Info().Str("session", store.Path()).Msg("Saved the encrypted session")
 
 	return nil
 }

@@ -103,7 +103,7 @@ func main() {
 					},
 					&cli.BoolFlag{
 						Name:        "new",
-						Usage:       "Remove old session and create new one",
+						Usage:       "Log in again even if the current session still works",
 						HideDefault: true,
 					},
 				},

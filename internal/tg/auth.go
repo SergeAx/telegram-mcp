@@ -3,8 +3,6 @@ package tg
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
@@ -14,19 +12,16 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/chaindead/telegram-mcp/internal/prompt"
-	"github.com/chaindead/telegram-mcp/internal/sessionstore"
 )
 
-func Auth(phone string, appID int64, appHash string, sessionPath string, password string, newSession, useQR bool) error {
-	if newSession {
-		_ = os.Remove(sessionPath)
-	}
-
+// Auth logs in unless the session in storage is already authorized, and
+// returns the user ID.
+func Auth(phone string, appID int, appHash string, storage telegram.SessionStorage, password string, useQR bool) (int64, error) {
 	dispatcher := tg.NewUpdateDispatcher()
 	loggedIn := qrlogin.OnLoginToken(dispatcher)
 
 	opts := telegram.Options{
-		SessionStorage: sessionstore.Open(sessionPath),
+		SessionStorage: storage,
 		UpdateHandler:  dispatcher,
 	}
 	if newOpts, err := telegram.OptionsFromEnvironment(opts); err != nil {
@@ -35,17 +30,13 @@ func Auth(phone string, appID int64, appHash string, sessionPath string, passwor
 		opts = newOpts
 	}
 
-	client := telegram.NewClient(int(appID), appHash, opts)
+	client := telegram.NewClient(appID, appHash, opts)
 
-	sessionDir := filepath.Dir(sessionPath)
-	if err := os.MkdirAll(sessionDir, 0700); err != nil {
-		return fmt.Errorf("mkdir(%s): %w", sessionDir, err)
-	}
-
+	var selfID int64
 	if err := client.Run(context.Background(), func(ctx context.Context) error {
 		var err error
 		if useQR {
-			err = qrAuth(ctx, client, int(appID), appHash, password, loggedIn)
+			err = qrAuth(ctx, client, appID, appHash, password, loggedIn)
 		} else {
 			err = codeAuth(ctx, client, phone, password)
 		}
@@ -64,13 +55,14 @@ func Auth(phone string, appID int64, appHash string, sessionPath string, passwor
 			Str("username", self.Username).
 			Int64("id", self.ID).
 			Msg("Logged in as")
+		selfID = self.ID
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("client error: %w", err)
+		return 0, fmt.Errorf("client error: %w", err)
 	}
 
-	return nil
+	return selfID, nil
 }
 
 // passwordPrompt asks for the 2FA password only if the account has one and

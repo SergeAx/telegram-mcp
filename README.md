@@ -30,6 +30,7 @@ The server is a bridge between the Telegram API and the AI assistants and is bas
 - [Configuration](#configuration)
   - [Authorization](#authorization)
   - [Client Configuration](#client-configuration)
+  - [Config directory](#config-directory)
   - [JSON Schema Version](#json-schema-version)
   - [Download directory](#download-directory)
   - [Telegram links in Windows Terminal](#telegram-links-in-windows-terminal)
@@ -223,7 +224,7 @@ Before you can use the server, you need to connect to the Telegram API.
    > but leaves the password in shell history and the process list
 
    >  __Note:__
-   > If you want to override existing session: add --new
+   > To log in again although the session still works, add --new
 
    ```bash
    telegram-mcp auth --phone <your-phone-number>
@@ -234,6 +235,9 @@ Before you can use the server, you need to connect to the Telegram API.
    > __Note:__
    > If the code never arrives, replace `--phone <your-phone-number>` with `--qr`
    > and scan the QR code in Telegram on your phone: Settings → Devices → Link Desktop Device
+
+   `auth` saves the session encrypted, next to `config.toml`: see [Config directory](#config-directory).
+   A `session.json` left by an earlier version gets encrypted too, and `auth` offers to delete the unencrypted original.
 
 4. Done! Please give this project a ⭐️ to support its development.
 
@@ -278,6 +282,21 @@ The server reads the API ID from `config.toml`. Without one, set `TG_API_ID` in 
     }
     ```
 
+### Config directory
+
+telegram-mcp keeps its files in `~/.telegram-mcp`, or wherever `--config-dir` (`TG_CONFIG_DIR`) points:
+
+| File | Contents | Written by |
+|------|----------|------------|
+| `config.toml` | `api_id`; `api_hash`, encrypted; `default_account`, the user ID of the account the server uses | `init`, `auth` |
+| `<user id>.session.age` | The account's Telegram session, encrypted: whoever decrypts it can use the account | `auth`, then the server as Telegram updates the session |
+
+Both are encrypted with an [age](https://age-encryption.org) key that `init` keeps in the OS keychain, or in `TG_SECRET_KEY` where there is no keychain.
+Losing the key costs another `init` and `auth`. To read a file by hand, save the key to a file and run `age -d -i <key file> <file>`.
+
+The server still runs on an unencrypted `session.json` of an earlier version, warning about it, until `init` or `auth` encrypts it.
+`--session` (`TG_SESSION_PATH`) points the server at such a file explicitly.
+
 ### JSON Schema Version
 
 Some MCP clients (e.g. VS Code) do not support JSON Schema Draft 2020-12 and will reject tools that use it. You can override the JSON Schema version by setting the `--schema-version` flag or the `TG_SCHEMA_VERSION` environment variable.
@@ -302,7 +321,6 @@ Assistants running in a terminal, such as Claude Code, can link straight to a ch
 
 ## To-do
 
-- [ ] Encrypt secrets in the session file with a key kept in `.env`: anyone who reads the file can take over the account
 - [ ] Report each message's number of reactions in `tg_dialog`
 - [ ] Add a tool that reads a single message, with its full list of reactions on request
 - [ ] Address users without a username by ID, like `cht[id]` and `chn[id:hash]`: `tg_dialogs` gives them no `name`, so `tg_dialog`, `tg_read` and `tg_send` can't reach them

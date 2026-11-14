@@ -17,6 +17,24 @@ type MeResponse struct {
 
 type EmptyArguments struct{}
 
+func (c *Client) SelfID(ctx context.Context) (int64, error) {
+	var id int64
+	client := c.T()
+	if err := client.Run(ctx, func(ctx context.Context) error {
+		self, err := client.Self(ctx)
+		if err != nil {
+			return errors.Wrap(err, "get self info")
+		}
+		id = self.ID
+
+		return nil
+	}); err != nil {
+		return 0, errors.Wrap(err, "invalid session")
+	}
+
+	return id, nil
+}
+
 func (c *Client) GetMe(_ EmptyArguments) (*mcp.ToolResponse, error) {
 	var toolResponse *mcp.ToolResponse
 

@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/chaindead/telegram-mcp/internal/config"
-	"github.com/chaindead/telegram-mcp/internal/sessionstore"
 	"github.com/chaindead/telegram-mcp/internal/tg"
 	"github.com/invopop/jsonschema"
 
@@ -28,20 +27,22 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 	if appID == 0 {
 		return errors.New("API ID is not set: run telegram-mcp init, or pass --api-id or TG_API_ID")
 	}
-	sessionPath := legacySessionPath(cmd)
+	storage, err := serverStorage(cmd, cfg)
+	if err != nil {
+		return err
+	}
 	dryRun := cmd.Bool("dry")
 
 	if schemaURL := cmd.String("schema-version"); schemaURL != "" {
 		jsonschema.Version = schemaURL
 	}
 
-	_, err = os.Stat(sessionPath)
-	if err != nil {
-		return fmt.Errorf("session file not found(%s): %w", sessionPath, err)
+	if _, err := os.Stat(storage.Path()); err != nil {
+		return fmt.Errorf("session file not found, run telegram-mcp auth: %w", err)
 	}
 
 	server := mcp.NewServer(stdio.NewStdioServerTransport())
-	client := tg.New(appID, "", sessionstore.Open(sessionPath), cmd.String("download-dir"))
+	client := tg.New(appID, "", storage, cmd.String("download-dir"))
 
 	if dryRun {
 		return runChecks(client)
