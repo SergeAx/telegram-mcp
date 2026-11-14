@@ -1,34 +1,23 @@
+version: "2"
 run:
   concurrency: 4
-  timeout: 10m
   issues-exit-code: 2
   tests: true
-  build-tags: []
   allow-parallel-runners: true
   allow-serial-runners: true
-  go: '1.24'
-
 output:
   formats:
-    - format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
-  path-prefix: ""
-  sort-results: true
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
   sort-order:
     - linter
     - severity
     - file
-  show-stats: true
-
+  path-prefix: ""
 linters:
   enable:
-    - errcheck
-    - govet
-    - gosimple
-    - ineffassign
-    - staticcheck
-    - unused
     - asciicheck
     - bodyclose
     - canonicalheader
@@ -43,6 +32,7 @@ linters:
     - gocyclo
     - gosec
     - grouper
+    - importas
     - inamedparam
     - lll
     - makezero
@@ -51,49 +41,53 @@ linters:
     - nilnil
     - nlreturn
     - noctx
+    - nolintlint
     - perfsprint
     - prealloc
     - revive
     - testifylint
     - whitespace
-    - importas
     - wrapcheck
-    - nolintlint
-
-linters-settings:
-  lll:
-    line-length: 150
-
-  wrapcheck:
-    ignoreSigs:
-      - github.com/pkg/errors.Wrap(
-      - github.com/pkg/errors.Wrapf(
-      - github.com/pkg/errors.New(
-      - fmt.Errorf
-
-  gocyclo:
-    min-complexity: 15
-
-  dupl:
-    threshold: 100
-
-issues:
-  exclude-dirs-use-default: true
-  exclude-files: []
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - lll
-    - path: internal/config/
-      linters:
-        - importas
-    - path: cmd/.*\.go
-      text: "exitAfterDefer"
-      linters:
-        - gocritic
-    - text: "should be written without leading space as"
-      linters: [nolintlint]
+  settings:
+    dupl:
+      threshold: 100
+    gocyclo:
+      min-complexity: 15
+    lll:
+      line-length: 150
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - errcheck
+          - gocyclo
+          - gosec
+          - lll
+        path: _test\.go
+      - linters:
+          - importas
+        path: internal/config/
+      - linters:
+          - gocritic
+        path: cmd/.*\.go
+        text: exitAfterDefer
+      - linters:
+          - nolintlint
+        text: should be written without leading space as
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
