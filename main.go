@@ -93,7 +93,7 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:        "password",
-						Usage:       "Password for 2FA if exists",
+						Usage:       "2FA password, asked for when needed if omitted",
 						HideDefault: true,
 					},
 					&cli.BoolFlag{

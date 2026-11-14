@@ -208,7 +208,8 @@ Before you can use the server, you need to connect to the Telegram API.
 1. Get the API ID and hash from [Telegram API](https://my.telegram.org/auth)
 2. Run the following command:
    > __Note:__
-   > If you have 2FA enabled: add --password <2fa_password>
+   > If you have 2FA enabled, `auth` asks for the password. `--password <2fa_password>` skips the question,
+   > but leaves the password in shell history and the process list
 
    >  __Note:__
    > If you want to override existing session: add --new
@@ -295,7 +296,6 @@ Assistants running in a terminal, such as Claude Code, can link straight to a ch
 ## To-do
 
 - [ ] Encrypt secrets in the session file with a key kept in `.env`: anyone who reads the file can take over the account
-- [ ] Read the 2FA password from the console or STDIN instead of `--password`, which leaks into shell history and the process list
 - [ ] Report each message's number of reactions in `tg_dialog`
 - [ ] Add a tool that reads a single message, with its full list of reactions on request
 - [ ] Address users without a username by ID, like `cht[id]` and `chn[id:hash]`: `tg_dialogs` gives them no `name`, so `tg_dialog`, `tg_read` and `tg_send` can't reach them

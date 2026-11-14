@@ -22,9 +22,9 @@ func qrAuth(ctx context.Context, client *telegram.Client, appID int, appHash, pa
 		return nil
 	}
 
-	opts := qrlogin.Options{Migrate: client.MigrateTo}
-	if password != "" {
-		opts.Password = func(context.Context) (string, error) { return password, nil }
+	opts := qrlogin.Options{
+		Migrate:  client.MigrateTo,
+		Password: func(context.Context) (string, error) { return askPassword(password) },
 	}
 
 	_, err = qrlogin.NewQR(client.API(), appID, appHash, opts).Auth(ctx, loggedIn, func(_ context.Context, token qrlogin.Token) error {

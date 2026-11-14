@@ -1,12 +1,10 @@
 package tg
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
@@ -15,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/chaindead/telegram-mcp/internal/prompt"
 	"github.com/chaindead/telegram-mcp/internal/sessionstore"
 )
 
@@ -74,8 +73,32 @@ func Auth(phone string, appID int64, appHash string, sessionPath string, passwor
 	return nil
 }
 
+// passwordPrompt asks for the 2FA password only if the account has one and
+// it was not given upfront.
+type passwordPrompt struct {
+	auth.UserAuthenticator
+	password string
+}
+
+func (p passwordPrompt) Password(context.Context) (string, error) {
+	return askPassword(p.password)
+}
+
+func askPassword(password string) (string, error) {
+	if password != "" {
+		return password, nil
+	}
+
+	answer, err := prompt.Masked("🔑 2FA password: ")
+	if err != nil {
+		return "", fmt.Errorf("read 2FA password: %w", err)
+	}
+
+	return answer, nil
+}
+
 func codeAuth(ctx context.Context, client *telegram.Client, phone, password string) error {
-	flow := auth.NewFlow(auth.Constant(phone, password, auth.CodeAuthenticatorFunc(func(_ context.Context, sent *tg.AuthSentCode) (string, error) {
+	code := auth.CodeAuthenticatorFunc(func(_ context.Context, sent *tg.AuthSentCode) (string, error) {
 		ev := log.Info().Stringer("via", sent.Type)
 		if next, ok := sent.GetNextType(); ok {
 			ev = ev.Stringer("next", next)
@@ -85,14 +108,14 @@ func codeAuth(ctx context.Context, client *telegram.Client, phone, password stri
 		}
 		ev.Msg("Code sent")
 
-		fmt.Print("📩 Enter code: ")
-		code, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		answer, err := prompt.Line("📩 Enter code: ")
 		if err != nil {
 			return "", fmt.Errorf("read code: %w", err)
 		}
 
-		return strings.TrimSpace(code), nil
-	})), auth.SendCodeOptions{})
+		return answer, nil
+	})
+	flow := auth.NewFlow(passwordPrompt{auth.Constant(phone, "", code), password}, auth.SendCodeOptions{})
 
 	return errors.Wrap(client.Auth().IfNecessary(ctx, flow), "code login")
 }

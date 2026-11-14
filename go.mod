@@ -10,6 +10,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/pflag v1.0.6
 	github.com/urfave/cli/v3 v3.1.0
+	golang.org/x/term v0.45.0
 	golang.org/x/time v0.14.0
 	rsc.io/qr v0.2.0
 )
