@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/gotd/td/session"
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 
 	"github.com/chaindead/telegram-mcp/internal/config"
@@ -53,15 +52,15 @@ func authCommand(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	ev := log.Info().Int("api_id", creds.apiID)
 	if phone != "" {
-		ev = ev.Str("phone", maskPhone(phone))
+		notice("Logging in as %s with API ID %d", maskPhone(phone), creds.apiID)
+	} else {
+		notice("Logging in with API ID %d", creds.apiID)
 	}
-	ev.Msg("Authenticate with Telegram")
 
 	userID, err := tg.Auth(phone, creds.apiID, creds.apiHash, login, cmd.String("password"), useQR)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to authenticate with Telegram")
+		return fmt.Errorf("log in: %w", err)
 	}
 
 	if err := saveAccount(ctx, dir, cfg, creds, key, login, userID); err != nil {
@@ -73,8 +72,9 @@ func authCommand(ctx context.Context, cmd *cli.Command) error {
 		server["env"] = map[string]string{"TG_API_ID": strconv.Itoa(creds.apiID)}
 	}
 
-	snippet, _ := json.MarshalIndent(map[string]any{"telegram": server}, "", "\t")
-	log.Info().RawJSON("config", snippet).Msg("Successfully authenticated with Telegram")
+	snippet, _ := json.MarshalIndent(map[string]any{"telegram": server}, "", "  ")
+	notice("Add the server to your MCP client config:")
+	fmt.Println(string(snippet))
 
 	return nil
 }
@@ -110,7 +110,7 @@ func saveAccount(
 		return fmt.Errorf("save the new session: %w", err)
 	}
 	if prev := cfg.DefaultAccount; prev != 0 && prev != userID {
-		log.Info().Str("session", config.SessionPath(dir, prev)).Msg("Kept the session of the previous account")
+		notice("Kept the session of the previous account in %s", config.SessionPath(dir, prev))
 	}
 
 	cfg.DefaultAccount = userID
@@ -122,7 +122,7 @@ func saveAccount(
 	if err := cfg.Save(dir); err != nil {
 		return fmt.Errorf("save config: %w", err)
 	}
-	log.Info().Str("session", store.Path()).Msg("Saved the encrypted session")
+	notice("Saved the encrypted session to %s", store.Path())
 
 	return nil
 }

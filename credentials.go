@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 
 	"github.com/chaindead/telegram-mcp/internal/config"
@@ -146,9 +145,8 @@ func loadOrCreateKey() (*secret.Key, error) {
 		return nil, fmt.Errorf("create secret key: %w", err)
 	}
 	if err := key.Store(); err != nil {
-		log.Warn().Err(err).Msg("No OS keychain to keep the secret key in")
-		fmt.Fprintf(os.Stderr, "\nSet this variable wherever telegram-mcp runs, in the MCP client config too:\n\n  %s=%s\n\n",
-			secret.EnvVar, key)
+		notice("No OS keychain to keep the secret key in: %v", err)
+		notice("Set this variable wherever telegram-mcp runs, in the MCP client config too:\n\n  %s=%s\n", secret.EnvVar, key)
 	}
 
 	return key, nil

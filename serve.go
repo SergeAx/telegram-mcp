@@ -3,7 +3,6 @@ package main
 import (
 	"cmp"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -14,7 +13,6 @@ import (
 
 	mcp "github.com/metoro-io/mcp-golang"
 	"github.com/metoro-io/mcp-golang/transport/stdio"
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 )
 
@@ -93,19 +91,14 @@ func runChecks(client *tg.Client) error {
 		return fmt.Errorf("get user: %w", err)
 	}
 
-	data, err := json.MarshalIndent(answer, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshal: %w", err)
-	}
-
-	log.Info().RawJSON("answer", data).Msg("Check GetMe: OK")
+	reportCheck("GetMe", answer)
 
 	answer, err = client.GetDialogs(tg.DialogsArguments{Offset: "", OnlyUnread: true})
 	if err != nil {
 		return fmt.Errorf("get dialogs: %w", err)
 	}
 
-	log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetDialogs: OK")
+	reportCheck("GetDialogs", answer)
 
 	// The public @telegram news channel, not the verified "Telegram" service
 	// chat: that one holds login codes, which must not reach the log.
@@ -114,28 +107,35 @@ func runChecks(client *tg.Client) error {
 		return fmt.Errorf("get channel history: %w", err)
 	}
 
-	log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetHistory: OK")
+	reportCheck("GetHistory", answer)
 
 	testUser := os.Getenv("TG_TEST_USERNAME")
 	if testUser == "" {
-		log.Info().Msg("TG_TEST_USERNAME is not set, skipping SendDraft and ReadHistory checks")
+		notice("TG_TEST_USERNAME is not set, skipping the SendDraft and ReadHistory checks")
 
 		return nil
 	}
 
 	answer, err = client.SendDraft(tg.DraftArguments{Name: testUser, Text: "test draft"})
 	if err != nil {
-		log.Err(err).Msg("Check SendDraft: FAIL")
+		notice("Check SendDraft: FAIL: %v", err)
 	} else {
-		log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check SendDraft: OK")
+		reportCheck("SendDraft", answer)
 	}
 
 	answer, err = client.ReadHistory(tg.ReadArguments{Name: testUser})
 	if err != nil {
-		log.Err(err).Msg("Check ReadHistory: FAIL")
+		notice("Check ReadHistory: FAIL: %v", err)
 	} else {
-		log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check ReadHistory: OK")
+		reportCheck("ReadHistory", answer)
 	}
 
 	return nil
+}
+
+// reportCheck prints the answer to stdout, which carries nothing else
+// without the MCP server.
+func reportCheck(name string, answer *mcp.ToolResponse) {
+	notice("Check %s: OK", name)
+	fmt.Println(answer.Content[0].TextContent.Text)
 }

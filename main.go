@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -116,6 +117,11 @@ func main() {
 	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal().Msg(err.Error())
 	}
+}
+
+// notice talks to the person at the terminal; logs are for diagnostics.
+func notice(format string, args ...any) {
+	fmt.Fprintf(os.Stderr, format+"\n", args...)
 }
 
 func apiHashFlag() cli.Flag {

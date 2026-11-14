@@ -50,7 +50,7 @@ func migrateLegacySession(ctx context.Context, cmd *cli.Command, cfg *config.Con
 		return fmt.Errorf("read the old session: %w", err)
 	}
 	if cfg.DefaultAccount != 0 {
-		log.Warn().Str("session", path).Msg("Delete this unencrypted session: config.toml already names an account")
+		notice("Delete %s: it holds a session unencrypted, and config.toml already names an account", path)
 
 		return nil
 	}
@@ -90,7 +90,7 @@ func migrateLegacySession(ctx context.Context, cmd *cli.Command, cfg *config.Con
 	if err := cfg.Save(dir); err != nil {
 		return fmt.Errorf("save the account: %w", err)
 	}
-	log.Info().Str("from", path).Str("to", encrypted.Path()).Msg("Encrypted the session")
+	notice("Encrypted the session from %s into %s", path, encrypted.Path())
 
 	removeLegacySession(path)
 
@@ -113,15 +113,15 @@ func removeLegacySession(path string) {
 		answer, err := prompt.Line(fmt.Sprintf("Delete the unencrypted %s? [Y/n] ", path))
 		if err == nil && !strings.EqualFold(answer, "n") && !strings.EqualFold(answer, "no") {
 			if err := os.Remove(path); err != nil {
-				log.Warn().Err(err).Msg("Failed to delete the unencrypted session")
+				notice("Failed to delete the unencrypted session: %v", err)
 
 				return
 			}
-			log.Info().Str("session", path).Msg("Deleted the unencrypted session")
+			notice("Deleted %s", path)
 
 			return
 		}
 	}
 
-	log.Warn().Str("session", path).Msg("Delete this file: it holds the session unencrypted")
+	notice("Delete %s: it holds the session unencrypted", path)
 }

@@ -3,6 +3,8 @@ package tg
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
@@ -49,12 +51,11 @@ func Auth(phone string, appID int, appHash string, storage telegram.SessionStora
 			return fmt.Errorf("get self info: %w", err)
 		}
 
-		log.Info().
-			Str("first_name", self.FirstName).
-			Str("last_name", self.LastName).
-			Str("username", self.Username).
-			Int64("id", self.ID).
-			Msg("Logged in as")
+		name := strings.TrimSpace(self.FirstName + " " + self.LastName)
+		if self.Username != "" {
+			name += " @" + self.Username
+		}
+		fmt.Fprintf(os.Stderr, "Logged in as %s, user ID %d\n", name, self.ID)
 		selfID = self.ID
 
 		return nil
@@ -91,14 +92,14 @@ func askPassword(password string) (string, error) {
 
 func codeAuth(ctx context.Context, client *telegram.Client, phone, password string) error {
 	code := auth.CodeAuthenticatorFunc(func(_ context.Context, sent *tg.AuthSentCode) (string, error) {
-		ev := log.Info().Stringer("via", sent.Type)
+		sentVia := "Telegram sent the code via " + strings.TrimPrefix(sent.Type.TypeName(), "auth.sentCodeType")
 		if next, ok := sent.GetNextType(); ok {
-			ev = ev.Stringer("next", next)
+			sentVia += ", next time via " + strings.TrimPrefix(next.TypeName(), "auth.codeType")
 		}
 		if timeout, ok := sent.GetTimeout(); ok {
-			ev = ev.Int("resend_after_sec", timeout)
+			sentVia += fmt.Sprintf(", a new one after %d s", timeout)
 		}
-		ev.Msg("Code sent")
+		fmt.Fprintln(os.Stderr, sentVia)
 
 		answer, err := prompt.Line("📩 Enter code: ")
 		if err != nil {

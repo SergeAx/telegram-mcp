@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 
 	"github.com/chaindead/telegram-mcp/internal/config"
@@ -32,11 +31,9 @@ func initCommand(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	key, _ := secretKey()
-	ev := log.Info().Str("config", config.Path(dir)).Str("secret_key", key.Source())
+	notice("Saved the API credentials to %s, encrypted with the key from %s", config.Path(dir), key.Source())
 	if cfg.DefaultAccount == 0 {
-		ev.Msg("Saved the API credentials, now run: telegram-mcp auth --qr (or --phone <number>)")
-	} else {
-		ev.Msg("Saved the API credentials")
+		notice("Now log in: telegram-mcp auth --qr, or --phone <number>")
 	}
 
 	return nil
