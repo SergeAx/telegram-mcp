@@ -33,10 +33,12 @@ type DialogsArguments struct {
 }
 
 type MessageInfo struct {
-	Who      string `json:"who,omitempty"`
-	When     string `json:"when"`
-	Text     string `json:"text,omitempty"`
-	IsUnread bool   `json:"is_unread,omitempty"`
+	ID       int        `json:"id,omitzero"`
+	Who      string     `json:"who,omitempty"`
+	When     string     `json:"when"`
+	Text     string     `json:"text,omitempty"`
+	Media    *MediaInfo `json:"media,omitzero"`
+	IsUnread bool       `json:"is_unread,omitempty"`
 	ts       int
 }
 

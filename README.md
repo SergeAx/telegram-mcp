@@ -45,7 +45,7 @@ The Model Context Protocol (MCP) is a system that lets AI apps, like Claude Desk
 - [x] Get current account information (`tool: tg_me`)
 - [x] List dialogs with unread counts and optional unread filter (`tool: tg_dialogs`)
 - [x] Mark dialog as read (`tool: tg_read`)
-- [x] Retrieve messages from specific dialog (`tool: tg_dialog`)
+- [x] Retrieve messages from specific dialog, with message IDs and attachments' type, file name and size (`tool: tg_dialog`)
 - [x] Send draft messages to any dialog (`tool: tg_send`)
 
 ### Prompt examples
@@ -290,8 +290,7 @@ Assistants running in a terminal, such as Claude Code, can link straight to a ch
 
 - [ ] Encrypt secrets in the session file with a key kept in `.env`: anyone who reads the file can take over the account
 - [ ] Read the 2FA password from the console or STDIN instead of `--password`, which leaks into shell history and the process list
-- [ ] Include each message's ID in `tg_dialog`, so assistants can link to it as `t.me/<chat>/<id>`
-- [ ] Report each message's media type and number of reactions in `tg_dialog`
+- [ ] Report each message's number of reactions in `tg_dialog`
 - [ ] Add a tool that reads a single message, with its full list of reactions on request
 - [ ] Address users without a username by ID, like `cht[id]` and `chn[id:hash]`: `tg_dialogs` gives them no `name`, so `tg_dialog`, `tg_read` and `tg_send` can't reach them
 - [ ] Split the core out of the server, so larger MCP servers can embed it, including ones that serve over HTTP

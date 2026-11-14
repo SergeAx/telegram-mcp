@@ -149,10 +149,12 @@ func (h *history) Info() []MessageInfo {
 		}
 
 		messages = append(messages, MessageInfo{
-			Who:  who,
-			When: time.Unix(int64(m.Date), 0).Format(time.DateTime),
-			Text: m.Message,
-			ts:   m.Date,
+			ID:    m.ID,
+			Who:   who,
+			When:  time.Unix(int64(m.Date), 0).Format(time.DateTime),
+			Text:  m.Message,
+			Media: describeMedia(m.Media),
+			ts:    m.Date,
 		})
 	}
 
