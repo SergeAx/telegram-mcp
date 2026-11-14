@@ -216,6 +216,10 @@ Before you can use the server, you need to connect to the Telegram API.
 
    📩 Enter the code you received from Telegram to connect to the API.
 
+   > __Note:__
+   > If the code never arrives, replace `--phone <your-phone-number>` with `--qr`
+   > and scan the QR code in Telegram on your phone: Settings → Devices → Link Desktop Device
+
 3. Done! Please give this project a ⭐️ to support its development.
 
 ### Client Configuration

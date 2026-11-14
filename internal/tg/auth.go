@@ -10,19 +10,25 @@ import (
 
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
+	"github.com/gotd/td/telegram/auth/qrlogin"
 	"github.com/gotd/td/tg"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
-func Auth(phone string, appID int64, appHash string, sessionPath string, password string, newSession bool) error {
+func Auth(phone string, appID int64, appHash string, sessionPath string, password string, newSession, useQR bool) error {
 	if newSession {
 		_ = os.Remove(sessionPath)
 	}
+
+	dispatcher := tg.NewUpdateDispatcher()
+	loggedIn := qrlogin.OnLoginToken(dispatcher)
 
 	opts := telegram.Options{
 		SessionStorage: &telegram.FileSessionStorage{
 			Path: sessionPath,
 		},
+		UpdateHandler: dispatcher,
 	}
 	if newOpts, err := telegram.OptionsFromEnvironment(opts); err != nil {
 		log.Warn().Err(err).Msg("Failed to load OptionsFromEnvironment, skipping")
@@ -38,31 +44,16 @@ func Auth(phone string, appID int64, appHash string, sessionPath string, passwor
 	}
 
 	if err := client.Run(context.Background(), func(ctx context.Context) error {
-		// Authenticate if needed
-		flow := auth.NewFlow(auth.Constant(phone, password, auth.CodeAuthenticatorFunc(func(_ context.Context, sent *tg.AuthSentCode) (string, error) {
-			ev := log.Info().Stringer("via", sent.Type)
-			if next, ok := sent.GetNextType(); ok {
-				ev = ev.Stringer("next", next)
-			}
-			if timeout, ok := sent.GetTimeout(); ok {
-				ev = ev.Int("resend_after_sec", timeout)
-			}
-			ev.Msg("Code sent")
-
-			fmt.Print("📩 Enter code: ")
-			code, err := bufio.NewReader(os.Stdin).ReadString('\n')
-			if err != nil {
-				return "", fmt.Errorf("read code: %w", err)
-			}
-
-			return strings.TrimSpace(code), nil
-		})), auth.SendCodeOptions{})
-
-		if err := client.Auth().IfNecessary(ctx, flow); err != nil {
+		var err error
+		if useQR {
+			err = qrAuth(ctx, client, int(appID), appHash, password, loggedIn)
+		} else {
+			err = codeAuth(ctx, client, phone, password)
+		}
+		if err != nil {
 			return fmt.Errorf("auth: %w", err)
 		}
 
-		// Get current user info
 		self, err := client.Self(ctx)
 		if err != nil {
 			return fmt.Errorf("get self info: %w", err)
@@ -81,4 +72,27 @@ func Auth(phone string, appID int64, appHash string, sessionPath string, passwor
 	}
 
 	return nil
+}
+
+func codeAuth(ctx context.Context, client *telegram.Client, phone, password string) error {
+	flow := auth.NewFlow(auth.Constant(phone, password, auth.CodeAuthenticatorFunc(func(_ context.Context, sent *tg.AuthSentCode) (string, error) {
+		ev := log.Info().Stringer("via", sent.Type)
+		if next, ok := sent.GetNextType(); ok {
+			ev = ev.Stringer("next", next)
+		}
+		if timeout, ok := sent.GetTimeout(); ok {
+			ev = ev.Int("resend_after_sec", timeout)
+		}
+		ev.Msg("Code sent")
+
+		fmt.Print("📩 Enter code: ")
+		code, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			return "", fmt.Errorf("read code: %w", err)
+		}
+
+		return strings.TrimSpace(code), nil
+	})), auth.SendCodeOptions{})
+
+	return errors.Wrap(client.Auth().IfNecessary(ctx, flow), "code login")
 }

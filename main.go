@@ -76,10 +76,14 @@ func main() {
 				Usage: "Authenticate with Telegram",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "phone",
-						Usage:    "Phone number to authenticate with",
-						Required: true,
-						Aliases:  []string{"p"},
+						Name:    "phone",
+						Usage:   "Phone number to authenticate with (required unless --qr)",
+						Aliases: []string{"p"},
+					},
+					&cli.BoolFlag{
+						Name:        "qr",
+						Usage:       "Log in by scanning a QR code from a logged-in phone",
+						HideDefault: true,
 					},
 					&cli.StringFlag{
 						Name:        "password",
