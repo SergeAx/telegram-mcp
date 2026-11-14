@@ -2,6 +2,7 @@ package tg
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -29,11 +30,15 @@ func getInputPeerID(p tg.PeerClass) tg.InputPeerClass {
 }
 
 func (o DialogsOffset) MarshalJSON() ([]byte, error) {
-	return json.Marshal(o.String())
+	data, err := json.Marshal(o.String())
+	if err != nil {
+		return nil, fmt.Errorf("marshal offset: %w", err)
+	}
+
+	return data, nil
 }
 
 func (o *DialogsOffset) String() string {
-
 	var id int64
 	var peerType string
 	switch p := o.Peer.(type) {
@@ -60,7 +65,7 @@ func (o *DialogsOffset) String() string {
 func (o *DialogsOffset) UnmarshalJSON(data []byte) error {
 	parts := strings.Split(string(data), "-")
 	if len(parts) != 4 {
-		return fmt.Errorf("invalid format")
+		return errors.New("invalid format")
 	}
 
 	var err error
@@ -78,7 +83,7 @@ func (o *DialogsOffset) UnmarshalJSON(data []byte) error {
 		chatID, err = strconv.ParseInt(parts[1], 10, 64)
 		o.Peer = &tg.InputPeerChat{ChatID: chatID}
 	default:
-		return fmt.Errorf("unknown peer type")
+		return errors.New("unknown peer type")
 	}
 
 	if err != nil {

@@ -142,12 +142,9 @@ func (h *history) Info() []MessageInfo {
 		}
 
 		var who string
-		if m.FromID != nil {
-			switch from := m.FromID.(type) {
-			case *tg.PeerUser:
-				if user, ok := h.users[from.UserID]; ok {
-					who = getUsername(user)
-				}
+		if from, ok := m.FromID.(*tg.PeerUser); ok {
+			if user, ok := h.users[from.UserID]; ok {
+				who = getUsername(user)
 			}
 		}
 

@@ -20,7 +20,7 @@ func main() {
 
 	debugPath := os.Getenv("TG_DEBUG_LOG")
 	if debugPath != "" {
-		logFile, err := os.OpenFile(debugPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		logFile, err := os.OpenFile(debugPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666) //nolint:gosec // the operator chooses the log path
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to open debug log file")
 		}

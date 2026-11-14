@@ -27,7 +27,6 @@ const (
 	DefaultDialogsLimit = 100
 )
 
-// nolint:lll
 type DialogsArguments struct {
 	Offset     string `json:"offset,omitempty" jsonschema:"description=Offset for continuation"`
 	OnlyUnread bool   `json:"only_unread,omitempty" jsonschema:"description=Include only dialogs with unread mark"`
@@ -109,11 +108,9 @@ type dialogs struct {
 	// chat id key
 	messages map[int64]*tg.Message
 	users    map[int64]*tg.User
-	//dialogs  map[string]*tg.Dialog
 	chats    map[int64]*tg.Chat
 	channels map[int64]*tg.Channel
 
-	//opts
 	onlyUnread bool
 }
 
@@ -149,6 +146,7 @@ func newDialogs(rawD tg.MessagesDialogsClass, onlyUnread bool) (*dialogs, error)
 		u, ok := uc.(*tg.User)
 		if !ok {
 			log.Debug().Msgf("newDialogs(%+v): invalid message user", uc)
+
 			continue
 		}
 
@@ -189,6 +187,7 @@ func (d *dialogs) Info() []DialogInfo {
 		info, err := d.processDialog(dialogItem)
 		if err != nil {
 			log.Debug().Err(err).Str("dialog", dItem.String()).Msg("failed process dialog")
+
 			continue
 		}
 
@@ -319,6 +318,7 @@ func (d *dialogs) getType(rawD *tg.Dialog) DialogType {
 		u, ok := d.users[getPeerID(rawD.Peer)]
 		if !ok {
 			log.Debug().Msgf("getType(%+v): user not found", v)
+
 			return DialogTypeUser
 		}
 
@@ -329,6 +329,7 @@ func (d *dialogs) getType(rawD *tg.Dialog) DialogType {
 		return DialogTypeUser
 	default:
 		log.Debug().Msgf("getType(%+v): unknown dialog type", v)
+
 		return DialogTypeUnknown
 	}
 }
@@ -348,5 +349,4 @@ func getPeerID(p tg.PeerClass) int64 {
 	default:
 		return 0
 	}
-
 }

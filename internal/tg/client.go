@@ -24,5 +24,6 @@ func (c *Client) T() *telegram.Client {
 		NoUpdates: true,
 	}
 	opts, _ = telegram.OptionsFromEnvironment(opts)
+
 	return telegram.NewClient(c.appID, c.appHash, opts)
 }
