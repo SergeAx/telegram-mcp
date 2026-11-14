@@ -39,7 +39,16 @@ func Auth(phone string, appID int64, appHash string, sessionPath string, passwor
 
 	if err := client.Run(context.Background(), func(ctx context.Context) error {
 		// Authenticate if needed
-		flow := auth.NewFlow(auth.Constant(phone, password, auth.CodeAuthenticatorFunc(func(_ context.Context, _ *tg.AuthSentCode) (string, error) {
+		flow := auth.NewFlow(auth.Constant(phone, password, auth.CodeAuthenticatorFunc(func(_ context.Context, sent *tg.AuthSentCode) (string, error) {
+			ev := log.Info().Stringer("via", sent.Type)
+			if next, ok := sent.GetNextType(); ok {
+				ev = ev.Stringer("next", next)
+			}
+			if timeout, ok := sent.GetTimeout(); ok {
+				ev = ev.Int("resend_after_sec", timeout)
+			}
+			ev.Msg("Code sent")
+
 			fmt.Print("📩 Enter code: ")
 			code, err := bufio.NewReader(os.Stdin).ReadString('\n')
 			if err != nil {
