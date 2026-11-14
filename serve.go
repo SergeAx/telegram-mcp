@@ -34,57 +34,7 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 	client := tg.New(int(appID), appHash, sessionPath)
 
 	if dryRun {
-		answer, err := client.GetMe(tg.EmptyArguments{})
-		if err != nil {
-			return fmt.Errorf("get user: %w", err)
-		}
-
-		data, err := json.MarshalIndent(answer, "", "  ")
-		if err != nil {
-			return fmt.Errorf("marshal: %w", err)
-		}
-
-		log.Info().RawJSON("answer", data).Msg("Check GetMe: OK")
-
-		answer, err = client.GetDialogs(tg.DialogsArguments{Offset: "", OnlyUnread: true})
-		if err != nil {
-			return fmt.Errorf("get dialogs: %w", err)
-		}
-
-		log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetDialogs: OK")
-
-		answer, err = client.GetHistory(tg.HistoryArguments{Name: os.Getenv("TG_TEST_USERNAME")})
-		if err != nil {
-			return fmt.Errorf("get nickname history: %w", err)
-		}
-
-		answer, err = client.GetHistory(tg.HistoryArguments{Name: "cht[4626931529]"})
-		if err != nil {
-			return fmt.Errorf("get chat history: %w", err)
-		}
-
-		answer, err = client.GetHistory(tg.HistoryArguments{Name: "chn[2225853048:8934705438195741763]"})
-		if err != nil {
-			return fmt.Errorf("get chan history: %w", err)
-		}
-
-		log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetHistory: OK")
-
-		answer, err = client.SendDraft(tg.DraftArguments{Name: os.Getenv("TG_TEST_USERNAME"), Text: "test draft"})
-		if err != nil {
-			log.Err(err).Msg("Check SendDraft: FAIL")
-		} else {
-			log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check SendDraft: OK")
-		}
-
-		answer, err = client.ReadHistory(tg.ReadArguments{Name: os.Getenv("TG_TEST_USERNAME")})
-		if err != nil {
-			log.Err(err).Msg("Check ReadHistory: FAIL")
-		} else {
-			log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check ReadHistory: OK")
-		}
-
-		return nil
+		return runChecks(client)
 	}
 
 	err = server.RegisterTool("tg_me", "Get current telegram account info", client.GetMe)
@@ -117,6 +67,60 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	<-ctx.Done()
+
+	return nil
+}
+
+func runChecks(client *tg.Client) error {
+	answer, err := client.GetMe(tg.EmptyArguments{})
+	if err != nil {
+		return fmt.Errorf("get user: %w", err)
+	}
+
+	data, err := json.MarshalIndent(answer, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+
+	log.Info().RawJSON("answer", data).Msg("Check GetMe: OK")
+
+	answer, err = client.GetDialogs(tg.DialogsArguments{Offset: "", OnlyUnread: true})
+	if err != nil {
+		return fmt.Errorf("get dialogs: %w", err)
+	}
+
+	log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetDialogs: OK")
+
+	_, err = client.GetHistory(tg.HistoryArguments{Name: os.Getenv("TG_TEST_USERNAME")})
+	if err != nil {
+		return fmt.Errorf("get nickname history: %w", err)
+	}
+
+	_, err = client.GetHistory(tg.HistoryArguments{Name: "cht[4626931529]"})
+	if err != nil {
+		return fmt.Errorf("get chat history: %w", err)
+	}
+
+	answer, err = client.GetHistory(tg.HistoryArguments{Name: "chn[2225853048:8934705438195741763]"})
+	if err != nil {
+		return fmt.Errorf("get chan history: %w", err)
+	}
+
+	log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check GetHistory: OK")
+
+	answer, err = client.SendDraft(tg.DraftArguments{Name: os.Getenv("TG_TEST_USERNAME"), Text: "test draft"})
+	if err != nil {
+		log.Err(err).Msg("Check SendDraft: FAIL")
+	} else {
+		log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check SendDraft: OK")
+	}
+
+	answer, err = client.ReadHistory(tg.ReadArguments{Name: os.Getenv("TG_TEST_USERNAME")})
+	if err != nil {
+		log.Err(err).Msg("Check ReadHistory: FAIL")
+	} else {
+		log.Info().RawJSON("answer", []byte(answer.Content[0].TextContent.Text)).Msg("Check ReadHistory: OK")
+	}
 
 	return nil
 }
