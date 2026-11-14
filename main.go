@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"os"
 	"path/filepath"
@@ -34,28 +35,25 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to get home dir")
 	}
 
-	configDir := filepath.Join(homeDir, dir)
-	sesionPath := filepath.Join(configDir, "session.json")
-
 	app := &cli.Command{
 		Name:  "telegram-mcp",
 		Usage: "Telegram MCP server",
 		Flags: []cli.Flag{
-			&cli.IntFlag{
-				Name:     "app-id",
-				Usage:    "Telegram App ID",
-				Required: true,
-				Sources:  cli.EnvVars("TG_APP_ID"),
-			},
 			&cli.StringFlag{
-				Name:    "api-hash",
-				Usage:   "Telegram API Hash, needed only for auth",
-				Sources: cli.EnvVars("TG_API_HASH"),
+				Name:    "config-dir",
+				Usage:   "Directory with config.toml and the session",
+				Value:   filepath.Join(homeDir, dir),
+				Sources: cli.EnvVars("TG_CONFIG_DIR"),
+			},
+			&cli.IntFlag{
+				Name:    "api-id",
+				Aliases: []string{"app-id"},
+				Usage:   "Telegram API ID, overrides config.toml",
+				Sources: cli.EnvVars("TG_API_ID", "TG_APP_ID"),
 			},
 			&cli.StringFlag{
 				Name:    "session",
-				Usage:   "Path to session file",
-				Value:   sesionPath,
+				Usage:   "Path to session file (default: session.json in --config-dir)",
 				Sources: cli.EnvVars("TG_SESSION_PATH"),
 			},
 			&cli.StringFlag{
@@ -78,9 +76,16 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
+				Name:   "init",
+				Usage:  "Store the API ID and the encrypted API hash in config.toml",
+				Flags:  []cli.Flag{apiHashFlag()},
+				Action: initCommand,
+			},
+			{
 				Name:  "auth",
 				Usage: "Authenticate with Telegram",
 				Flags: []cli.Flag{
+					apiHashFlag(),
 					&cli.StringFlag{
 						Name:    "phone",
 						Usage:   "Phone number to authenticate with (required unless --qr)",
@@ -111,4 +116,16 @@ func main() {
 	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal().Msg(err.Error())
 	}
+}
+
+func apiHashFlag() cli.Flag {
+	return &cli.StringFlag{
+		Name:    "api-hash",
+		Usage:   "Telegram API hash, overrides config.toml",
+		Sources: cli.EnvVars("TG_API_HASH"),
+	}
+}
+
+func legacySessionPath(cmd *cli.Command) string {
+	return cmp.Or(cmd.Root().String("session"), filepath.Join(cmd.Root().String("config-dir"), "session.json"))
 }

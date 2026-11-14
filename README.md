@@ -105,10 +105,7 @@ npx -y @chaindead/telegram-mcp auth ...
   "mcpServers": {
     "telegram": {
       "command": "npx",
-      "args": ["-y", "@chaindead/telegram-mcp"],
-      "env": {
-        "TG_APP_ID": "<your-api-id>"
-      }
+      "args": ["-y", "@chaindead/telegram-mcp"]
     }
   }
 }
@@ -206,7 +203,21 @@ go install github.com/chaindead/telegram-mcp@latest
 Before you can use the server, you need to connect to the Telegram API.
 
 1. Get the API ID and hash from [Telegram API](https://my.telegram.org/auth)
-2. Run the following command:
+2. Store them:
+
+   ```bash
+   telegram-mcp init
+   ```
+
+   `init` asks for the API ID and the API hash, showing the hash as asterisks, and saves both to `~/.telegram-mcp/config.toml`.
+   The hash is encrypted with a key that `init` keeps in the OS keychain. Where there is no keychain, such as on a headless Linux
+   or in a container, `init` prints the key instead: set it as `TG_SECRET_KEY` wherever telegram-mcp runs.
+
+   > __Note:__
+   > This step is optional: `auth` asks the same questions when `config.toml` has no answers. `--api-id` (`TG_API_ID`)
+   > and `--api-hash` (`TG_API_HASH`) answer them upfront and override `config.toml`, for `init` and `auth` alike
+
+3. Log in:
    > __Note:__
    > If you have 2FA enabled, `auth` asks for the password. `--password <2fa_password>` skips the question,
    > but leaves the password in shell history and the process list
@@ -215,7 +226,7 @@ Before you can use the server, you need to connect to the Telegram API.
    > If you want to override existing session: add --new
 
    ```bash
-   telegram-mcp auth --app-id <your-api-id> --api-hash <your-api-hash> --phone <your-phone-number>
+   telegram-mcp auth --phone <your-phone-number>
    ```
 
    📩 Enter the code you received from Telegram to connect to the API.
@@ -224,13 +235,13 @@ Before you can use the server, you need to connect to the Telegram API.
    > If the code never arrives, replace `--phone <your-phone-number>` with `--qr`
    > and scan the QR code in Telegram on your phone: Settings → Devices → Link Desktop Device
 
-3. Done! Please give this project a ⭐️ to support its development.
+4. Done! Please give this project a ⭐️ to support its development.
 
 ### Client Configuration
 
 Example of Configuring Claude Desktop to recognize the Telegram MCP server.
 
-The server needs only the API ID: the API hash is used by `auth` alone.
+The server reads the API ID from `config.toml`. Without one, set `TG_API_ID` in `env`: the API hash is used by `init` and `auth` alone.
 
 1. Open the Claude Desktop configuration file:
     - in MacOS, the configuration file is located at `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -248,7 +259,6 @@ The server needs only the API ID: the API hash is used by `auth` alone.
         "telegram": {
           "command": "telegram-mcp",
           "env": {
-            "TG_APP_ID": "<your-app-id>",
             "PATH": "<path_to_telegram-mcp_binary_dir>",
             "HOME": "<path_to_your_home_directory"
           }
@@ -262,10 +272,7 @@ The server needs only the API ID: the API hash is used by `auth` alone.
     {
       "mcpServers": {
         "telegram-mcp": {
-          "command": "telegram-mcp",
-          "env": {
-            "TG_APP_ID": "<your-app-id>"
-          }
+          "command": "telegram-mcp"
         }
       }
     }

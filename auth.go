@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/chaindead/telegram-mcp/internal/config"
 	"github.com/chaindead/telegram-mcp/internal/tg"
 
 	"github.com/rs/zerolog/log"
@@ -22,34 +24,43 @@ func authCommand(_ context.Context, cmd *cli.Command) error {
 	}
 	newSession := cmd.Bool("new")
 	pass := cmd.String("password")
-	appID := cmd.Root().Int("app-id")
-	apiHash := cmd.Root().String("api-hash")
-	if apiHash == "" {
-		return errors.New("--api-hash (or TG_API_HASH) is required for auth")
+	dir := cmd.Root().String("config-dir")
+	sessionPath := legacySessionPath(cmd)
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
 	}
-	sessionPath := cmd.Root().String("session")
+	creds, err := resolveCredentials(cmd, cfg, false)
+	if err != nil {
+		return err
+	}
 
 	ev := log.Info().
 		Str("session", sessionPath).
-		Int64("app-id", appID)
+		Int("api_id", creds.apiID)
 	if phone != "" {
 		ev = ev.Str("phone", maskPhone(phone))
 	}
 	ev.Msg("Authenticate with Telegram")
 
-	err := tg.Auth(phone, appID, apiHash, sessionPath, pass, newSession, useQR)
+	err = tg.Auth(phone, int64(creds.apiID), creds.apiHash, sessionPath, pass, newSession, useQR)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to authenticate with Telegram")
 	}
 
-	config := map[string]any{
-		"telegram": map[string]any{
-			"command": "telegram-mcp",
-			"env":     map[string]string{"TG_APP_ID": strconv.FormatInt(appID, 10)},
-		},
+	if creds.asked {
+		if err := creds.save(dir, cfg); err != nil {
+			return err
+		}
 	}
 
-	data, _ := json.MarshalIndent(config, "", "\t")
+	server := map[string]any{"command": "telegram-mcp"}
+	if creds.apiID != cfg.APIID {
+		server["env"] = map[string]string{"TG_API_ID": strconv.Itoa(creds.apiID)}
+	}
+
+	data, _ := json.MarshalIndent(map[string]any{"telegram": server}, "", "\t")
 	log.Info().RawJSON("config", data).Msg("Successfully authenticated with Telegram")
 
 	return nil
