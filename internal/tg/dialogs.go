@@ -46,6 +46,7 @@ type DialogInfo struct {
 	Type        string       `json:"type"`
 	Title       string       `json:"title"`
 	LastMessage *MessageInfo `json:"last_message,omitempty"`
+	UnreadCount int          `json:"unread_count,omitempty"`
 	Empty       bool         `json:"empty,omitempty"`
 }
 
@@ -270,6 +271,7 @@ func (d *dialogs) processDialog(dialogItem *tg.Dialog) (DialogInfo, error) {
 	}
 
 	info.Type = string(d.getType(dialogItem))
+	info.UnreadCount = dialogItem.UnreadCount
 
 	if info.LastMessage == nil {
 		info.Empty = true
