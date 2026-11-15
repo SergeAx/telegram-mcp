@@ -10,6 +10,12 @@ import (
 	"github.com/gotd/td/tg"
 )
 
+const (
+	peerKindUser    = "user"
+	peerKindChat    = "chat"
+	peerKindChannel = "chan"
+)
+
 type DialogsOffset struct {
 	MsgID int `json:"msg_id"`
 	Date  int `json:"offset_date"`
@@ -43,13 +49,13 @@ func (o *DialogsOffset) String() string {
 	var peerType string
 	switch p := o.Peer.(type) {
 	case *tg.InputPeerUser:
-		peerType = "user"
+		peerType = peerKindUser
 		id = p.UserID
 	case *tg.InputPeerChannel:
-		peerType = "chan"
+		peerType = peerKindChannel
 		id = p.ChannelID
 	case *tg.InputPeerChat:
-		peerType = "chat"
+		peerType = peerKindChat
 		id = p.ChatID
 	default:
 		peerType = "unknown"
@@ -70,15 +76,15 @@ func (o *DialogsOffset) UnmarshalJSON(data []byte) error {
 
 	var err error
 	switch parts[0] {
-	case "user":
+	case peerKindUser:
 		var userID int64
 		userID, err = strconv.ParseInt(parts[1], 10, 64)
 		o.Peer = &tg.InputPeerUser{UserID: userID}
-	case "chan":
+	case peerKindChannel:
 		var channelID int64
 		channelID, err = strconv.ParseInt(parts[1], 10, 64)
 		o.Peer = &tg.InputPeerChannel{ChannelID: channelID}
-	case "chat":
+	case peerKindChat:
 		var chatID int64
 		chatID, err = strconv.ParseInt(parts[1], 10, 64)
 		o.Peer = &tg.InputPeerChat{ChatID: chatID}
