@@ -148,29 +148,30 @@ func (h *history) Info() []MessageInfo {
 	messages := make([]MessageInfo, 0, len(h.Messages))
 
 	for _, msg := range h.Messages {
-		m, ok := msg.(*tg.Message)
-		if !ok {
-			continue
+		if m, ok := msg.(*tg.Message); ok {
+			messages = append(messages, h.info(m))
 		}
-
-		var who string
-		if from, ok := m.FromID.(*tg.PeerUser); ok {
-			if user, ok := h.users[from.UserID]; ok {
-				who = getUsername(user)
-			}
-		}
-
-		messages = append(messages, MessageInfo{
-			ID:    m.ID,
-			Who:   who,
-			When:  time.Unix(int64(m.Date), 0).Format(time.DateTime),
-			Text:  m.Message,
-			Media: describeMedia(m.Media),
-			ts:    m.Date,
-		})
 	}
 
 	return messages
+}
+
+func (h *history) info(m *tg.Message) MessageInfo {
+	var who string
+	if from, ok := m.FromID.(*tg.PeerUser); ok {
+		if user, ok := h.users[from.UserID]; ok {
+			who = getUsername(user)
+		}
+	}
+
+	return MessageInfo{
+		ID:    m.ID,
+		Who:   who,
+		When:  time.Unix(int64(m.Date), 0).Format(time.DateTime),
+		Text:  m.Message,
+		Media: describeMedia(m.Media),
+		ts:    m.Date,
+	}
 }
 
 func (h *history) Offset() int {

@@ -76,6 +76,11 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("register read tool: %w", err)
 	}
 
+	err = server.RegisterTool("tg_search", "Search messages by text in all dialogs, or in one dialog when its name is given", client.Search)
+	if err != nil {
+		return fmt.Errorf("register search tool: %w", err)
+	}
+
 	if err := server.Serve(); err != nil {
 		return fmt.Errorf("serve: %w", err)
 	}
@@ -84,6 +89,11 @@ func serve(ctx context.Context, cmd *cli.Command) error {
 
 	return nil
 }
+
+// checkChannel is the public @telegram news channel, not the verified
+// "Telegram" service chat: that one holds login codes, which must not reach
+// the log.
+const checkChannel = "telegram"
 
 func runChecks(client *tg.Client) error {
 	answer, err := client.GetMe(tg.EmptyArguments{})
@@ -100,14 +110,19 @@ func runChecks(client *tg.Client) error {
 
 	reportCheck("GetDialogs", answer)
 
-	// The public @telegram news channel, not the verified "Telegram" service
-	// chat: that one holds login codes, which must not reach the log.
-	answer, err = client.GetHistory(tg.HistoryArguments{Name: "telegram"})
+	answer, err = client.GetHistory(tg.HistoryArguments{Name: checkChannel})
 	if err != nil {
 		return fmt.Errorf("get channel history: %w", err)
 	}
 
 	reportCheck("GetHistory", answer)
+
+	answer, err = client.Search(tg.SearchArguments{Name: checkChannel, Query: "Telegram"})
+	if err != nil {
+		return fmt.Errorf("search channel: %w", err)
+	}
+
+	reportCheck("Search", answer)
 
 	testUser := os.Getenv("TG_TEST_USERNAME")
 	if testUser == "" {
